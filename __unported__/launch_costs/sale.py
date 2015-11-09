@@ -22,11 +22,11 @@
 from openerp.osv import fields
 from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
-from openerp.addons.sale.sale import sale_order
+from openerp.addons.sale.sale import SaleOrder
 from openerp import models, api
 from openerp import fields as fields2
 
-class sale_order(models.Model):
+class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
     def _get_order(self, cr, uid, ids, context=None):
@@ -37,7 +37,7 @@ class sale_order(models.Model):
         return result.keys()
 
     _columns = {
-        'amount_untaxed': fields.function(sale_order._amount_all,
+        'amount_untaxed': fields.function(SaleOrder._amount_all,
             digits_compute=dp.get_precision('Account'),
             string='Untaxed Amount',
             store={
@@ -50,7 +50,7 @@ class sale_order(models.Model):
             },
             multi='sums', help="The amount without tax.",
             track_visibility='always'),
-        'amount_tax': fields.function(sale_order._amount_all,
+        'amount_tax': fields.function(SaleOrder._amount_all,
             digits_compute=dp.get_precision('Account'),
             string='Taxes',
             store={
@@ -62,7 +62,7 @@ class sale_order(models.Model):
                                      'launch_costs'], 10),
             },
             multi='sums', help="The tax amount."),
-        'amount_total': fields.function(sale_order._amount_all,
+        'amount_total': fields.function(SaleOrder._amount_all,
             digits_compute=dp.get_precision('Account'), string='Total',
             store={
                 'sale.order': (lambda self, cr, uid, ids, c={}:
@@ -76,7 +76,7 @@ class sale_order(models.Model):
     }
 
     def _amount_line_tax(self, cr, uid, line, context=None):
-        val = super(sale_order, self).\
+        val = super(SaleOrder, self).\
             _amount_line_tax(cr, uid, line, context=context)
         data_obj = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
@@ -89,7 +89,7 @@ class sale_order(models.Model):
             val += c.get('amount', 0.0)
         return val
 
-class sale_order_line(models.Model):
+class SaleOrder_line(models.Model):
     _inherit = 'sale.order.line'
 
     def _amount_line(self, cr, uid, ids, field_name, arg, context=None):
@@ -100,7 +100,7 @@ class sale_order_line(models.Model):
             cr, uid, 'launch_costs', 'product_launch_costs')
         if context is None:
             context = {}
-        res = super(sale_order_line, self).\
+        res = super(SaleOrder_line, self).\
             _amount_line(cr, uid, ids, field_name, arg, context=context)
         for line in self.browse(cr, uid, ids, context=context):
             price = line.launch_costs or 0
@@ -127,13 +127,13 @@ class sale_order_line(models.Model):
     def copy(self, default=None):
         default = dict(default or {})
         default['launch_costs_line_id'] = False
-        return super(sale_order_line, self).copy(default)
+        return super(SaleOrder_line, self).copy(default)
 
     @api.one
     def copy_data(self, default=None):
         default = dict(default or {})
         default['launch_costs_line_id'] = False
-        return super(sale_order_line, self).copy_data(default)
+        return super(SaleOrder_line, self).copy_data(default)
 
     @api.multi
     def _launch_line_to_create(self):

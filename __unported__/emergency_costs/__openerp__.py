@@ -49,7 +49,7 @@ a line of emergency costs if needed by clicking on the
         "sale_view.xml",
         "invoice_view.xml",
     ],
-    'installable': True,
+    'installable': False,
     'active': False,
 }
 
