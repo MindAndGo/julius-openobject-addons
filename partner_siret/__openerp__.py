@@ -22,9 +22,12 @@
 {
     "name": "Siret in partners",
     "summary": "Add SIRET field in partners",
-    "version": "0.1",
+    "version": "9.0.0.1",
     "author": "Julius Network Solutions",
-    "contributors": "Mathieu Vatel <mathieu@julius.fr>, Yvan Patry <yvan@julius.fr>, Pierre Monod <pierre@julius.fr>",
+    "contributors": ["Mathieu Vatel <mathieu@julius.fr>", 
+        "Yvan Patry <yvan@julius.fr>",
+        "Pierre Monod <pierre@julius.fr>",
+        "Florent THOMAS <contact@mind-and-go.com>"],
     "website": "http://julius.fr",
     "category": "Sales Management",
     "depends": [
@@ -36,7 +39,7 @@ Add SIRET in :
 """,
     "demo": [],
     "data": [
-        "partner_view.xml",
+        "views/partner_view.xml",
     ],
     'installable': True,
     'active': False,
