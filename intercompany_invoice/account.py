@@ -78,7 +78,6 @@ class AccountInvoice(models.Model):
                 if vals.get('state') == 'open' and \
                     company_ids and not ci.supplier_invoice_id:
                     self.customer_to_supplier()
-        _logger.debug("SORTIE DU WRITE DE FACTURE")
         return res
 
     @api.multi
@@ -106,22 +105,40 @@ class AccountInvoice(models.Model):
                                 ('name', '=', 'property_supplier_payment_term_id'),
                                 ('res_id', '=', str('res.partner,%s' % partner.id)),
                                 ], limit=1)
-        if payment_term_id[0].value_reference:
+        if len(payment_term_id)==1 and payment_term_id[0].value_reference:
             _logger.debug("payment_term_id : %s" % payment_term_id)
             payment_term_id = payment_term_id.value_reference.split(",")[1]
         else:
             payment_term_id = False
-            
+
         fiscal_position_id = prop.search([
                                 ('company_id', '=', company.id),
                                 ('name', '=', 'property_account_position_id'),
                                 ('res_id', '=', str('res.partner,%s' % partner.id)),
                                 ], limit=1)
-        
-        if fiscal_position_id[0].value_reference :
+
+        if len(fiscal_position_id) ==1 and fiscal_position_id[0].value_reference :
             fiscal_position_id = fiscal_position_id.value_reference.split(",")[1]
         else:
             fiscal_position_id = False
+
+#                                
+#        if payment_term_id[0].value_reference:
+#            _logger.debug("payment_term_id : %s" % payment_term_id)
+#            payment_term_id = payment_term_id.value_reference.split(",")[1]
+#        else:
+#            payment_term_id = False
+#            
+#        fiscal_position_id = prop.search([
+#                                ('company_id', '=', company.id),
+#                                ('name', '=', 'property_account_position_id'),
+#                                ('res_id', '=', str('res.partner,%s' % partner.id)),
+#                                ], limit=1)
+#        
+#        if fiscal_position_id[0].value_reference :
+#            fiscal_position_id = fiscal_position_id.value_reference.split(",")[1]
+#        else:
+#            fiscal_position_id = False
         
         return fiscal_position_id, payment_term_id
         
@@ -287,8 +304,11 @@ class AccountInvoice(models.Model):
                                 'if you want to create a new one')
                                 % (cust_invoice.supplier_invoice_id.name))
 
-            company, partner = self.sudo()._check_intercompany_partner()
-
+            company, partner = cust_invoice.sudo()._check_intercompany_partner()
+             
+            if not company or not partner:
+                break
+            
             vals = self.sudo()._get_vals_for_supplier_invoice(company, partner)
             supplier_invoice = self.sudo().create(vals)
             
