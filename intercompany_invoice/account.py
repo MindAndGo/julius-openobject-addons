@@ -305,13 +305,13 @@ class AccountInvoice(models.Model):
                                 % (cust_invoice.supplier_invoice_id.name))
 
             company, partner = cust_invoice.sudo()._check_intercompany_partner()
-             
+            _logger.debug("Create invoice for %s in company %s", (partner, company) )
             if not company or not partner:
                 break
             
             vals = self.sudo()._get_vals_for_supplier_invoice(company, partner)
             supplier_invoice = self.sudo().create(vals)
-            
+            _logger.debug("Invoice created : %s " % supplier_invoice)
             self.write({'supplier_invoice_id': supplier_invoice.id})
             for line in cust_invoice.invoice_line_ids:
                 vals = self.sudo().\
