@@ -71,7 +71,7 @@ class AccountInvoice(models.Model):
 #        if self.user_has_groups('intercompany_invoice.group_intercompany_invoice'):
         res_company_obj = self.env['res.company']
         for ci in self:
-            if self.type in ['out_invoice']:
+            if ci.type in ['out_invoice']:
                 company_ids = res_company_obj.sudo().search(
                     [('partner_id', '=', ci.partner_id.id)], limit=1)
                 _logger.debug("COMPANY %s " % company_ids)
