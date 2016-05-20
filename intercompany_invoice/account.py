@@ -155,7 +155,7 @@ class AccountInvoice(models.Model):
                     ('type', '=', 'purchase'),
                     ('company_id', '=', company.id),
 #                     ('currency', '=', self.currency_id.id),
-                    ], limit=1)
+                    ], limit=1, order="sequence ASC")
         if not journal:
             raise Warning(_('Impossible to generate the linked invoice to ' \
                             '%s, There is no purchase journal ' \
