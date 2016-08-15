@@ -71,10 +71,10 @@ class AccountInvoice(models.Model):
 #        if self.user_has_groups('intercompany_invoice.group_intercompany_invoice'):
         res_company_obj = self.env['res.company']
         for ci in self:
-            if ci.type in ['out_invoice']:
+            if ci.type in ['out_invoice', 'out_refund']:
                 company_ids = res_company_obj.sudo().search(
                     [('partner_id', '=', ci.partner_id.id)], limit=1)
-                _logger.debug("COMPANY %s " % company_ids)
+#                _logger.debug("COMPANY %s " % company_ids)
                 if vals.get('state') == 'open' and \
                     company_ids and not ci.supplier_invoice_id:
                     self.customer_to_supplier()
@@ -147,6 +147,7 @@ class AccountInvoice(models.Model):
         """
         Prepare datas in the context of the other company
         """
+        self.ensure_one()
         journal_obj = self.env['account.journal'].with_context(force_company=company.id)
         prop = self.env['ir.property'].with_context(force_company=company.id)
         
@@ -199,7 +200,10 @@ class AccountInvoice(models.Model):
             'customer_invoice_id': self.id,
             'type': 'in_invoice',
         }
+        if self.type == 'out_refund':
+            res.update({'type': 'in_refund'})
         
+        _logger.debug("VALS %s" % res)
         return res
     
     @api.multi
@@ -309,15 +313,14 @@ class AccountInvoice(models.Model):
             if not company or not partner:
                 break
             
-            vals = self.sudo()._get_vals_for_supplier_invoice(company, partner)
-            supplier_invoice = self.sudo().create(vals)
-            _logger.debug("Invoice created : %s " % supplier_invoice)
-            self.write({'supplier_invoice_id': supplier_invoice.id})
+            vals = cust_invoice.sudo()._get_vals_for_supplier_invoice(company, partner)     
+            supplier_invoice = AccountInvoice_obj.sudo().create(vals)
+            cust_invoice.write({'supplier_invoice_id': supplier_invoice.id})
             for line in cust_invoice.invoice_line_ids:
-                vals = self.sudo().\
+                vals = cust_invoice.sudo().\
                     _get_vals_for_supplier_invoice_line(supplier_invoice, line,
                                                         company, partner)
                 AccountInvoice_line_obj.sudo().create(vals)
             supplier_invoice.sudo().compute_invoice_tax_lines()
-            
+                        
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
