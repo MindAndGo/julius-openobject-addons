@@ -210,7 +210,7 @@ class AccountInvoice(models.Model):
     def _get_taxes(self, company, product_id, fiscal_position):
         self.ensure_one()
         fiscal_position_id = self.env['account.fiscal.position'].search([('id', '=', fiscal_position)])
-        _logger.debug("USER %s" % self.env.uid)
+        
         if product_id:
             product_id = self.env['product.product']\
                                 .with_context(force_company=company.id).\
@@ -240,7 +240,7 @@ class AccountInvoice(models.Model):
     def _get_vals_for_supplier_invoice_line(self, supplier_invoice, line, company, partner):  
         vals = {}
         vals.update({
-                'invoice_id': supplier_invoice.id,
+#                'invoice_id': supplier_invoice.id,
                 'name': line.name,
                 'quantity': line.quantity,
                 'price_unit': line.price_unit,
@@ -255,8 +255,7 @@ class AccountInvoice(models.Model):
                                 ('res_id', '=', str('product.template,%s' % line.product_id.product_tmpl_id.id)),
                                 ])
             
-            if len(account) == 0:
-                _logger.debug("Entree from product :" )   
+            if len(account) == 0:                
                 account = prop.search([
                                 ('company_id', '=', company.id),
                                 ('name', '=', 'property_account_expense_categ_id'),
@@ -279,7 +278,7 @@ class AccountInvoice(models.Model):
             })
         
         fiscal_position_id, payment_term_id = self.get_position_and_payment_term(company, partner)
-        taxes = self.sudo()._get_taxes(company, line.product_id, fiscal_position_id )
+        taxes = line.invoice_id.sudo()._get_taxes(company, line.product_id, fiscal_position_id )
         if len(taxes) != 0:
             vals.update({'invoice_line_tax_ids': [(6, 0, taxes)],})
         
@@ -287,7 +286,7 @@ class AccountInvoice(models.Model):
             new_account = self.sudo()._get_account(fiscal_position_id, vals['account_id'])
             vals.update({'account_id':new_account})
             
-        _logger.debug("vals : %s" % vals)
+        _logger.debug("VALS %s" % vals)
         return vals
 
     @api.multi
@@ -299,7 +298,9 @@ class AccountInvoice(models.Model):
 
         AccountInvoice_obj = self.env['account.invoice']
         AccountInvoice_line_obj = self.env['account.invoice.line']
-
+        LinesToCompute = self.env['account.invoice.line']
+        
+        
         for cust_invoice in self:
             if cust_invoice.supplier_invoice_id:
                 raise Warning(_('You already had a supplier invoice '
@@ -308,19 +309,22 @@ class AccountInvoice(models.Model):
                                 'if you want to create a new one')
                                 % (cust_invoice.supplier_invoice_id.name))
 
-            company, partner = cust_invoice.sudo()._check_intercompany_partner()
+            company, partner = cust_invoice._check_intercompany_partner()
             _logger.debug("Create invoice for %s in company %s", (partner, company) )
             if not company or not partner:
                 break
             
-            vals = cust_invoice.sudo()._get_vals_for_supplier_invoice(company, partner)     
+            vals = cust_invoice._get_vals_for_supplier_invoice(company, partner)     
             supplier_invoice = AccountInvoice_obj.sudo().create(vals)
-            cust_invoice.write({'supplier_invoice_id': supplier_invoice.id})
+            cust_invoice.sudo().write({'supplier_invoice_id': supplier_invoice.id})
+
             for line in cust_invoice.invoice_line_ids:
-                vals = cust_invoice.sudo().\
+                vals = AccountInvoice_obj.sudo().\
                     _get_vals_for_supplier_invoice_line(supplier_invoice, line,
                                                         company, partner)
-                AccountInvoice_line_obj.sudo().create(vals)
+                LinesToCompute |= AccountInvoice_line_obj.sudo().create(vals)
+        
+            LinesToCompute.sudo().write({'invoice_id': supplier_invoice.id})
             supplier_invoice.sudo().compute_invoice_tax_lines()
                         
 
