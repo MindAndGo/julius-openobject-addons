@@ -259,6 +259,7 @@ class AccountInvoice(models.Model):
                 account = prop.search([
                                 ('company_id', '=', company.id),
                                 ('name', '=', 'property_account_expense_categ_id'),
+                                ('res_id', '=', False),
                                 ])
             
             account = account.value_reference.split(",")[1]
@@ -271,6 +272,7 @@ class AccountInvoice(models.Model):
             account = prop.search([
                                 ('company_id', '=', company.id),
                                 ('name', '=', 'property_account_expense_categ_id'),
+                                ('res_id', '=', False),
                                 ])
             account = account.value_reference.split(",")[1]            
             vals.update( {                
@@ -283,7 +285,7 @@ class AccountInvoice(models.Model):
             vals.update({'invoice_line_tax_ids': [(6, 0, taxes)],})
         
         if fiscal_position_id:
-            new_account = self.sudo()._get_account(fiscal_position_id, vals['account_id'])
+            new_account = line.invoice_id.sudo()._get_account(fiscal_position_id, vals['account_id'])
             vals.update({'account_id':new_account})
             
         _logger.debug("VALS %s" % vals)
