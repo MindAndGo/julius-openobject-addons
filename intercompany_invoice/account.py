@@ -324,8 +324,9 @@ class AccountInvoice(models.Model):
                 vals = AccountInvoice_obj.sudo().\
                     _get_vals_for_supplier_invoice_line(supplier_invoice, line,
                                                         company, partner)
-                LinesToCompute |= AccountInvoice_line_obj.sudo().create(vals)
+                LinesToCompute = LinesToCompute + AccountInvoice_line_obj.sudo().create(vals)
         
+            _logger.debug("LinesToCompute : %s" % LinesToCompute)
             LinesToCompute.sudo().write({'invoice_id': supplier_invoice.id})
             supplier_invoice.sudo().compute_invoice_tax_lines()
                         
