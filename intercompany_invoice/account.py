@@ -248,23 +248,8 @@ class AccountInvoice(models.Model):
             })
             
         prop = self.env['ir.property'].with_context(force_company=company.id)    
-        if line.product_id:                                             
-#            account = prop.search([
-#                                ('company_id', '=', company.id),
-#                                ('name', '=', 'property_account_expense_id'),
-#                                ('res_id', '=', str('product.template,%s' % line.product_id.product_tmpl_id.id)),
-#                                ])
-#            
-#            if len(account) == 0:                
-#                account = prop.search([
-#                                ('company_id', '=', company.id),
-#                                ('name', '=', 'property_account_expense_categ_id'),
-#                                ('res_id', '=', False),
-#                                ])
-#            
-#            account = account.value_reference.split(",")[1]
-#            
-            accounts = line.product_id.product_tmpl_id.with_context(force_company=company.id).get_product_accounts()
+        if line.product_id:                                                         
+            accounts = line.product_id.product_tmpl_id.with_context(force_company=company.id).sudo().get_product_accounts()
             _logger.debug("ACCOUNTS %s" % accounts)
             vals.update( {
                     'product_id': line.product_id.id,
